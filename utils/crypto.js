@@ -75,8 +75,3 @@ function decrypt(text)
     //now we have binary form of our text let us convert this to normal string form and return it 
     return decrypted.toString();
 }
-
-
-// console.log(encrypt("PRAKHAR UYOU ARE NOT GY"));
-// a9a970a5273d0a542ede6db1742e4847:d80c6621ab6ca9101332cf01e5569eb8442434741d79ea396c613548ced9a6c6
-console.log(decrypt("a9a970a5273d0a542ede6db1742e4847:d80c6621ab6ca9101332cf01e5569eb8442434741d79ea396c613548ced9a6c6"));
