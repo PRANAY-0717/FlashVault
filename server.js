@@ -82,10 +82,20 @@ app.post("/secret",async (req,res)=>{
     res.render("success",{link,id});
 });
 
+//a thank you path after copying the text or the link\
+app.get("/thanks",(req,res)=>{
+    res.render("thanks");
+})
+
+app.get("/secret/:id",(req,res)=>{
+    let {id} =req.params;
+    let link = `${req.protocol}://${req.host}`;
+    res.render("click",{link,id})
+});
 "Hey App, wait for a second (await). Go to the database (supabase), open the 'secrets' table (.from), and get all the details (.select). Look for the specific row where the ID matches this one (.eq). Since IDs are unique, I only want that one specific item, not a list (.single). When you get it, unpack the result into 'data' and 'error' variables (const { data, error })."
 
 //now we will make the 4th and dinal route to make them see the view once 
-app.get("/secret/:id",async (req,res)=>{
+app.get("/text/:id",async (req,res)=>{
     let link = `${req.protocol}://${req.host}`;
     //lets get the id
     let {id} = req.params;
@@ -138,10 +148,7 @@ app.get("/secret/:id",async (req,res)=>{
         res.render("reveal",{secret,limitTime:viewLimit,link});
     });
 
-//a thank you path after copying the text or the link\
-app.get("/end",(req,res)=>{
-    res.render("copied");
-})
+
 
 
 //Now also let us start our server and listen to the request 

@@ -17,14 +17,19 @@
         let limit = "<%=limitTime %>";
         document.getElementById("secret").innerText=secret;
         if(limit && limit!=="null")
-            setTimeout(()=>window.location.reload(),parseFloat(limit));
+            setTimeout(()=>{
+        if(!isRedirecting)
+        window.location.reload()
+                        }
+            ,parseFloat(limit));
 
         //now we are going to add copy to clipboard facility here 
         document.getElementById("copy").addEventListener("click",()=>{
             navigator.clipboard.writeText(secret).
             then(()=>{
                 console.log("copied");
-                window.location.href="<%=link%>/end";
+                let isRedirecting=true;
+                window.location.href="<%=link%>/thanks";
             })
             .catch((e)=>{
                 console.log(e);
@@ -34,14 +39,12 @@
         //whenever you press a button the website reloads and fils the attempt to take a screenshot or stop the JS
         document.addEventListener("keydown",(e)=>
         {
+            if(!isRedirecting)
             window.location.reload();
         });
         document.addEventListener("visibilitychange",(e)=>
         {
-            window.location.reload();
-        });
-        document.addEventListener("blur",(e)=>
-        {
+            if(!isRedirecting)
             window.location.reload();
         });
         //also here we will avoid the menu from showing by clicking the right click
