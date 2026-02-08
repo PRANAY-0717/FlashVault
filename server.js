@@ -66,7 +66,7 @@ app.post("/secret",async (req,res)=>{
         {
             encryptedText:encryptedText,
             expirationTime:expirationTime,
-            viewLimit : viewLimitSet=="on" ? parseFloat(viewLimit)*60*1000 : null
+            viewLimit : viewLimitSet=="on" ? Math.round(parseFloat(viewLimit)*60*1000) : null
         }
     ])
     .select();//to get the id back
