@@ -51,7 +51,7 @@ app.get("/new",(req,res)=>{
 //3.Now we will make a route for making a link for this text 
 app.post("/secret",async (req,res)=>{
     //let us get the text which the user has entered , the validity time adn the view time limit 
-    let { text, validity,viewLimitSet,viewLimit} = req.body;
+    let {text, validity,viewLimitSet,viewLimit} = req.body;
 
     //now let us encrypt our text also 
     let encryptedText = encrypt(text);

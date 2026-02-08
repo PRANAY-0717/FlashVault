@@ -18,10 +18,9 @@
         document.getElementById("secret").innerText=secret;
         if(limit && limit!=="null")
             setTimeout(()=>{
-        if(!isRedirecting)
         window.location.reload()
                         }
-            ,parseFloat(limit));
+            ,limit);
 
         //now we are going to add copy to clipboard facility here 
         document.getElementById("copy").addEventListener("click",()=>{
