@@ -2,5 +2,37 @@
         <title>FlashVault -  New FlashText</title>
 </head>
 <body>
-    <h3>Create your FlashText</h3>
+    <div style="text-align: center;">
+    <h2>Create your FlashText</h2>
+    <br>
+    <form action="/secret" method="post">
+        <label for="">Enter your Secret text</label><br>
+        <input required type="text" name="text">
+        <br>
+        <h6>Put time in Minutes</h6>
+        <br>
+        Set View Limit time?
+        <input type="checkbox" id="checkbox" name="viewLimitSet">
+        <br>
+        <br>
+        <label>Enter the time for which user can see the text</label><br>
+        <input id="1" disabled type="number" step="0.1" name="viewLimit" >
+        <br>
+        <br>
+        <label>Enter the duration of the link to stay alive</label><br>
+        <input required type="number" name="validity">
+        <br>
+        <br>
+        <button>Submit</button>
+    </form>
+    </div>
+    <script>
+        let box = document.getElementById("checkbox");
+        let field =document.getElementById("1");
+        box.addEventListener("click",()=>{
+            field.disabled=!box.checked;
+            if(!box.checked)
+                field.value="";
+        })
+    </script>
 <%-include("includes/footer.ejs")%>

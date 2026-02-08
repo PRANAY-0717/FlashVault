@@ -1,0 +1,23 @@
+<%- include("includes/header.ejs")%>
+        <title>FlashVault - Success</title>
+</head>
+<body>
+    <div style="text-align: center;">
+    <h3 >Success</h3>
+    <h2><a href="<%=link%>/secret/<%=id%>"><%=link%>/secret/<%=id%></a></h2>
+    <button id="copy">COPY</button>
+    </div>
+    <script>
+        document.getElementById("copy").addEventListener("click",()=>{
+            navigator.clipboard.writeText("<%=link%>/secret/<%=id%>")
+            .then(()=>{
+                console.log("copied");
+                //now as the user has pressed the copied button we will shift him to the thank you page 
+                window.location.href="<%=link%>/end";
+            })
+            .catch((e)=>{
+                console.log(e);
+            })
+        });
+    </script>
+    <%- include("includes/header.ejs")%>

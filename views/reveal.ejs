@@ -1,0 +1,58 @@
+<%-include("includes/header.ejs")%>
+        <title>FlashVault -  Secret</title>
+</head>
+<body>
+    <h3 id="secret" style="color: rgb(249, 217, 176); text-align: center;"></h3>
+    
+    <div style="text-align: center;">
+    <button id="copy">CLICK TO COPY</button>
+    <h4>WARNINGS</h4>
+    <h5>Do not click any button</h5>
+    <h5>Copt the text in your view limit time</h5>
+    <h5>Once the text is copied then you cant see it</h5>
+    <h5>Do not reload it will make the text disappear</h5>
+    </div>
+    <script>
+        let secret=<%- JSON.stringify(secret)%>;
+        let limit = "<%=limitTime %>";
+        document.getElementById("secret").innerText=secret;
+        if(limit && limit!=="null")
+            setTimeout(()=>window.location.reload(),parseFloat(limit));
+
+        //now we are going to add copy to clipboard facility here 
+        document.getElementById("copy").addEventListener("click",()=>{
+            navigator.clipboard.writeText(secret).
+            then(()=>{
+                console.log("copied");
+                window.location.href="<%=link%>/end";
+            })
+            .catch((e)=>{
+                console.log(e);
+            });
+        });
+
+        //whenever you press a button the website reloads and fils the attempt to take a screenshot or stop the JS
+        document.addEventListener("keydown",(e)=>
+        {
+            window.location.reload();
+        });
+        document.addEventListener("visibilitychange",(e)=>
+        {
+            window.location.reload();
+        });
+        document.addEventListener("blur",(e)=>
+        {
+            window.location.reload();
+        });
+        //also here we will avoid the menu from showing by clicking the right click
+        document.addEventListener('contextmenu', event => {
+        event.preventDefault();
+    });
+
+        window.addEventListener("pagehide", () => {
+        document.body.innerHTML = "Text Expired"; // Nuke the DOM
+        document.body.style.textAlign="center";
+        document.body.style.backgroundColor = "#FFF"; // Optional: Leave it black
+        });
+    </script>
+<%-include("includes/footer.ejs")%>

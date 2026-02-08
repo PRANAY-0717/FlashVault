@@ -75,3 +75,6 @@ function decrypt(text)
     //now we have binary form of our text let us convert this to normal string form and return it 
     return decrypted.toString();
 }
+
+//we have to export the encrypt and decypt functrions ro use it outside the server.js
+module.exports = {encrypt,decrypt} ;
