@@ -38,12 +38,10 @@
         //whenever you press a button the website reloads and fils the attempt to take a screenshot or stop the JS
         document.addEventListener("keydown",(e)=>
         {
-            if(!isRedirecting)
             window.location.reload();
         });
         document.addEventListener("visibilitychange",(e)=>
         {
-            if(!isRedirecting)
             window.location.reload();
         });
         //also here we will avoid the menu from showing by clicking the right click

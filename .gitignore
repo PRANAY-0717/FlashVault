@@ -26,3 +26,4 @@ Thumbs.db        # Windows clutter
 dist/
 build/
 coverage/
+internal_master_design.md
