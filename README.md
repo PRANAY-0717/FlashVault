@@ -55,11 +55,42 @@ FlashVault serves as a secure broker between the sender and the recipient, ensur
     *   **Presentation**: The decrypted text is rendered to the user *once*. Refreshing the page returns a 404 or "Expired" message.
 
 ### Tech Stack
-*   **Runtime**: **Node.js** (chosen for non-blocking I/O and rapid handling of concurrent requests).
-*   **Framework**: **Express.js** (backend routing and middleware).
-*   **Database**: **Supabase** (PostgreSQL-based, chosen for reliability and speed).
-*   **Templating**: **EJS** (Server-side rendering for secure, dynamic view generation without complex client-side state).
-*   **Encryption**: **Node.js Crypto Module** (Native, high-performance cryptographic primitives).
+*   **Frontend**:
+    *   **Core**: Next.js 14 App Router, React 18, TypeScript
+    *   **Styling**: Tailwind CSS (Cyber Vault Dark Theme)
+    *   **UI Primitives & Animations**: shadcn/ui, Magic UI (`BorderBeam`, `BlurFade`, `ShimmerButton`), Framer Motion
+    *   **3D Graphics & WebGL**: Three.js, React Three Fiber (`@react-three/fiber`), Drei (`@react-three/drei`)
+*   **Backend**:
+    *   **Runtime**: Node.js & Express.js (Decoupled REST API + Legacy EJS Fallback)
+    *   **Database**: Supabase (PostgreSQL-based encrypted storage)
+    *   **Encryption**: Node.js Native Crypto (`aes-256-cbc`)
+
+---
+
+## ⚡ Getting Started
+
+### 1. Configure Environment
+Copy `.env.example` to `.env` in the root folder and configure:
+```env
+PORT=3000
+MY_SECRET_KEY=<your-64-character-hex-encryption-key>
+SUPABASE_URL=<your-supabase-url>
+SUPABASE_KEY=<your-supabase-key>
+```
+
+### 2. Start the Backend API
+```bash
+npm run dev:backend
+# Starts Express server on http://localhost:3000
+```
+
+### 3. Start the Next.js Frontend
+```bash
+npm run dev:frontend
+# Starts Next.js frontend on http://localhost:3001
+```
+
+Visit [http://localhost:3001](http://localhost:3001) to experience the new 3D Cyber Vault UI!
 
 ---
 

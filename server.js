@@ -13,6 +13,15 @@ require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 
+// CORS middleware to support decoupled frontend
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    if (req.method === "OPTIONS") return res.sendStatus(200);
+    next();
+});
+
 //Now also set the path of our views folder permanently so that we call the server from elsewhere it is able to find the views folder always
 app.set('views',path.join(__dirname,'./views'));
 app.use(express.static(path.join(__dirname,'./public')));
@@ -92,7 +101,72 @@ app.get("/secret/:id",(req,res)=>{
     let link = `${req.protocol}://${req.host}`;
     res.render("click",{link,id})
 });
-"Hey App, wait for a second (await). Go to the database (supabase), open the 'secrets' table (.from), and get all the details (.select). Look for the specific row where the ID matches this one (.eq). Since IDs are unique, I only want that one specific item, not a list (.single). When you get it, unpack the result into 'data' and 'error' variables (const { data, error })."
+// Decoupled JSON API endpoints for Next.js frontend
+app.post(["/api/secret", "/api/secret-json"], async (req, res) => {
+    try {
+        let { text, validity, viewLimitSet, viewLimit } = req.body;
+        if (!text) {
+            return res.status(400).json({ error: "Secret text is required" });
+        }
+        let encryptedText = encrypt(text);
+        let expirationTime = (parseInt(validity || "60") * 60 * 1000) + Date.now();
+        const { data, error } = await supabase
+            .from("FlashTexts")
+            .insert([
+                {
+                    encryptedText: encryptedText,
+                    expirationTime: expirationTime,
+                    viewLimit: (viewLimitSet == "on" || viewLimitSet === true || viewLimitSet === "true") && viewLimit
+                        ? Math.round(parseFloat(viewLimit) * 60 * 1000)
+                        : null
+                }
+            ])
+            .select();
+
+        if (error || !data || data.length === 0) {
+            console.error("Supabase Error:", error);
+            return res.status(500).json({ error: "Failed to store secret in database" });
+        }
+
+        let link = `${req.protocol}://${req.get("host")}`;
+        let id = data[0].id;
+        return res.json({ id, link });
+    } catch (err) {
+        console.error("API Secret error:", err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+app.get(["/api/text/:id", "/api/text-json/:id"], async (req, res) => {
+    try {
+        let { id } = req.params;
+        let { data, error } = await supabase
+            .from("FlashTexts")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+        if (error || !data) {
+            return res.status(404).json({ error: "Secret already opened or not found" });
+        } else if (data.expirationTime < Date.now()) {
+            await supabase.from("FlashTexts").delete().eq("id", id);
+            return res.status(408).json({ error: "Secret expired" });
+        }
+
+        let secret = decrypt(data.encryptedText);
+        let limitTime = data.viewLimit;
+
+        // Atomically burn from database upon reading
+        await supabase.from("FlashTexts").delete().eq("id", id);
+
+        return res.json({ secret, limitTime });
+    } catch (err) {
+        console.error("API Text error:", err);
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// "Hey App, wait for a second (await). Go to the database (supabase), open the 'secrets' table (.from), and get all the details (.select). Look for the specific row where the ID matches this one (.eq). Since IDs are unique, I only want that one specific item, not a list (.single). When you get it, unpack the result into 'data' and 'error' variables (const { data, error })."
 
 //now we will make the 4th and dinal route to make them see the view once 
 app.get("/text/:id",async (req,res)=>{
