@@ -3,6 +3,7 @@ import { encrypt } from "@/lib/crypto";
 import { supabase } from "@/lib/supabase";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {

@@ -3,6 +3,7 @@ import { decrypt } from "@/lib/crypto";
 import { supabase } from "@/lib/supabase";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(
   req: NextRequest,
@@ -32,7 +33,13 @@ export async function GET(
     // Burn on read: Delete immediately from database
     await supabase.from("FlashTexts").delete().eq("id", id);
 
-    return NextResponse.json({ secret, limitTime });
+    return new NextResponse(JSON.stringify({ secret, limitTime }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+      },
+    });
   } catch (err: any) {
     console.error("Text API error:", err);
     return NextResponse.json({ error: err.message || "Internal error" }, { status: 500 });
