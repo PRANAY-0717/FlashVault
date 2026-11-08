@@ -38,3 +38,4 @@ export async function GET(
     return NextResponse.json({ error: err.message || "Internal error" }, { status: 500 });
   }
 }
+

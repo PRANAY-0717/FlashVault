@@ -2,12 +2,11 @@
   "name": "flashvault",
   "version": "1.0.0",
   "description": "FlashVault - Self-destructing encrypted secrets",
-  "main": "server.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "dev:backend": "node server.js",
+    "dev:backend": "node express-server.js",
     "lint": "next lint"
   },
   "dependencies": {
@@ -19,7 +18,7 @@
     "@radix-ui/react-tooltip": "^1.1.2",
     "@react-three/drei": "^9.109.2",
     "@react-three/fiber": "^8.17.6",
-    "@supabase/supabase-js": "^2.119.0",
+    "@supabase/supabase-js": "^2.95.3",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.4",
