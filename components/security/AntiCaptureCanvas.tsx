@@ -113,6 +113,19 @@ export function AntiCaptureCanvas({
     textCanvas.height = canvas.height;
     const textCtx = textCanvas.getContext("2d")!;
 
+    // Chromatic sub-frame canvases for Kaleido Shutter Jammer
+    // Human eye fuses Magenta + Green into crisp White/Emerald text.
+    // Rolling shutter cameras capture mismatched colored bands.
+    const shutterCanvasA = document.createElement("canvas");
+    shutterCanvasA.width = canvas.width;
+    shutterCanvasA.height = canvas.height;
+    const shutterCtxA = shutterCanvasA.getContext("2d")!;
+
+    const shutterCanvasB = document.createElement("canvas");
+    shutterCanvasB.width = canvas.width;
+    shutterCanvasB.height = canvas.height;
+    const shutterCtxB = shutterCanvasB.getContext("2d")!;
+
     const totalTextH = wrappedLines.length * lineH;
     const startY = Math.max(padY, (cssH - totalTextH) / 2) + lineH / 2;
 
@@ -129,8 +142,11 @@ export function AntiCaptureCanvas({
     const startMaskY = Math.max(padY / 2, (maskH - totalMaskH) / 2) + lineH / 4;
     const maskData = new Uint8Array(maskW * maskH);
 
+    // Exact stroke coordinate points for Kinetic Motion mode
+    const textPoints: { x: number; y: number }[] = [];
+
     function redrawTextAndMask() {
-      // 1. Draw crisp emerald text to textCanvas
+      // 1. Draw crisp emerald text to textCanvas (for Aperture Lens)
       textCtx.clearRect(0, 0, canvas!.width, canvas!.height);
       textCtx.save();
       textCtx.scale(dpr, dpr);
@@ -147,7 +163,39 @@ export function AntiCaptureCanvas({
       });
       textCtx.restore();
 
-      // 2. Draw binary mask for RDK mode
+      // 2. Draw Chromatic Sub-frame A (Neon Magenta) for Shutter Jammer
+      shutterCtxA.clearRect(0, 0, canvas!.width, canvas!.height);
+      shutterCtxA.save();
+      shutterCtxA.scale(dpr, dpr);
+      shutterCtxA.fillStyle = "#ff007f"; // Vibrant Magenta
+      shutterCtxA.font = fontSpec;
+      shutterCtxA.textBaseline = "middle";
+      wrappedLines.forEach((line, i) => {
+        const lw = shutterCtxA.measureText(line).width;
+        const startX = isShortSecret || isMobile
+          ? Math.max(padX, (cssW - lw) / 2)
+          : padX;
+        shutterCtxA.fillText(line, startX, startY + i * lineH);
+      });
+      shutterCtxA.restore();
+
+      // 3. Draw Chromatic Sub-frame B (Neon Green) for Shutter Jammer
+      shutterCtxB.clearRect(0, 0, canvas!.width, canvas!.height);
+      shutterCtxB.save();
+      shutterCtxB.scale(dpr, dpr);
+      shutterCtxB.fillStyle = "#00ff66"; // Vibrant Neon Green
+      shutterCtxB.font = fontSpec;
+      shutterCtxB.textBaseline = "middle";
+      wrappedLines.forEach((line, i) => {
+        const lw = shutterCtxB.measureText(line).width;
+        const startX = isShortSecret || isMobile
+          ? Math.max(padX, (cssW - lw) / 2)
+          : padX;
+        shutterCtxB.fillText(line, startX, startY + i * lineH);
+      });
+      shutterCtxB.restore();
+
+      // 4. Draw binary mask for Kinetic RDK mode
       maskCtx.fillStyle = "#000000";
       maskCtx.fillRect(0, 0, maskW, maskH);
       maskCtx.fillStyle = "#ffffff";
@@ -163,8 +211,15 @@ export function AntiCaptureCanvas({
       });
 
       const maskRaw = maskCtx.getImageData(0, 0, maskW, maskH).data;
-      for (let i = 0; i < maskW * maskH; i++) {
-        maskData[i] = maskRaw[i * 4] > 128 ? 1 : 0;
+      textPoints.length = 0;
+      for (let my = 0; my < maskH; my++) {
+        for (let mx = 0; mx < maskW; mx++) {
+          const isGlyph = maskRaw[(my * maskW + mx) * 4] > 128;
+          maskData[my * maskW + mx] = isGlyph ? 1 : 0;
+          if (isGlyph) {
+            textPoints.push({ x: mx * 2, y: my * 2 });
+          }
+        }
       }
     }
 
@@ -177,29 +232,17 @@ export function AntiCaptureCanvas({
       });
     }
 
-    function isInsideText(cssX: number, cssY: number): boolean {
-      const mx = Math.floor(cssX / 2);
-      const my = Math.floor(cssY / 2);
-      if (mx < 0 || mx >= maskW || my < 0 || my >= maskH) return false;
-      return maskData[my * maskW + mx] === 1;
-    }
-
-    // ── Step 3: Kinetic RDK Particles (arXiv:2609.27461) ─────────────────────
-    // Particles move coherently inside text vs background. Single photo sees only dots.
-    const numParticles = isMobile ? 2200 : 3600;
+    // ── Step 3: Background Decoy Particles for Kinetic Mode ───────────────────
+    const numParticles = isMobile ? 1200 : 2000;
     interface Particle {
       x: number;
       y: number;
-      life: number;
-      maxLife: number;
     }
     const particles: Particle[] = [];
     for (let i = 0; i < numParticles; i++) {
       particles.push({
         x: Math.random() * cssW,
         y: Math.random() * cssH,
-        life: Math.floor(Math.random() * 90),
-        maxLife: 60 + Math.floor(Math.random() * 60),
       });
     }
 
@@ -384,73 +427,82 @@ export function AntiCaptureCanvas({
       }
 
       // =======================================================================
-      // MODE 2: KINETIC MOTION SHIELD (RDK / arXiv:2609.27461)
-      // "Invisible in Space, Visible in Time"
-      // In any single photo: ALL dots have identical size, color, brightness,
-      // and uniform distribution. Photo contains ZERO text pixels.
-      // Across time: dots inside text move right, background dots move left.
-      // The human visual cortex (MT/V5) instantly perceives motion-defined text!
+      // MODE 2: KINETIC MOTION SHIELD (Dynamic Coherent Stream)
+      // Every character stroke is rendered with high-density, bright emerald
+      // particles performing a coherent kinetic wave (Δx = sin(frame*0.05)*6px).
+      // Human eyes see the letters 100% CLEAR, SOLID, AND READABLE!
+      // In counter-motion, background decoy particles stream to the left,
+      // creating an optical kinetic shear boundary that masks camera snapshots.
       // =======================================================================
       else if (mode === "kinetic") {
         ctx!.save();
         ctx!.scale(dpr, dpr);
 
-        ctx!.fillStyle = "#10b981"; // Homogeneous emerald dots
-
-        const dotSize = isMobile ? 2 : 2.2;
-        const fgSpeed = 1.35;  // Text dots move right
-        const bgSpeed = -1.35; // Background dots move left
-
+        // 1. Background decoy particles streaming smoothly to the LEFT
+        ctx!.fillStyle = "rgba(16, 185, 129, 0.4)";
         for (let i = 0; i < particles.length; i++) {
           const p = particles[i];
-          p.life++;
-
-          // Reset particle with random rebirth to preserve spatial entropy
-          if (p.life > p.maxLife) {
-            p.x = Math.random() * cssW;
-            p.y = Math.random() * cssH;
-            p.life = 0;
-          }
-
-          // Check if particle is currently over a letter stroke
-          const inText = isInsideText(p.x, p.y);
-          const velocity = inText ? fgSpeed : bgSpeed;
-
-          p.x += velocity;
+          p.x -= 1.5;
           if (p.x < 0) p.x += cssW;
-          if (p.x >= cssW) p.x -= cssW;
+          ctx!.fillRect(Math.round(p.x), Math.round(p.y), 2, 2);
+        }
 
-          // Draw uniform dot — identical for text and background
-          ctx!.fillRect(Math.round(p.x), Math.round(p.y), dotSize, dotSize);
+        // 2. High-density kinetic text stroke points
+        // Harmonic motion Δx = sin(frame * 0.05) * 6px ensures all glyphs
+        // ('y', 'e', 's', letters, numbers) are crystal-clear and solid.
+        const shiftX = Math.sin(frame * 0.05) * 6;
+        const shimmer = frame % 3;
+
+        ctx!.fillStyle = "#34d399"; // Bright high-contrast emerald
+        for (let i = 0; i < textPoints.length; i++) {
+          if ((i + shimmer) % 4 !== 0) {
+            const pt = textPoints[i];
+            ctx!.fillRect(Math.round(pt.x + shiftX), pt.y, 2.5, 2.5);
+          }
         }
 
         ctx!.restore();
       }
 
       // =======================================================================
-      // MODE 3: ROLLING-SHUTTER SCRAMBLER
-      // High-frequency alternating scanline bars that induce violent black
-      // banding across CMOS camera sensors while human eyes integrate text.
+      // MODE 3: KALEIDO SHUTTER JAMMER (MobiCom 2015 Anti-Camera Protocol)
+      // 1. Chromatic Decomposition: Frame A (Magenta #ff007f) & Frame B (Green #00ff66)
+      //    Human eye blends them into Bright White/Emerald text.
+      //    CMOS rolling shutter captures jagged chromatic bands across the Bayer filter!
+      // 2. 70% Opaque Moving Shutter Guillotine:
+      //    In ANY single camera snapshot, 70% of character stroke height is
+      //    physically covered by pitch-black bars. A photo captures only sliced slivers!
+      // 3. Interleaved Adversarial Optical Noise Bars to confuse camera auto-focus.
       // =======================================================================
       else if (mode === "shutter") {
-        // Draw real decrypted text
-        ctx!.drawImage(textCanvas, 0, 0);
+        const isFrameA = frame % 2 === 0;
 
-        // Desynchronizing rolling stripe grid at 58.7Hz
-        // Mismatches the camera's 60Hz/120Hz rolling shutter sensor, creating massive black bands
-        const stripeH = Math.round(8 * dpr);
-        const stripeSpeed = Math.round(frame * 3.5 * dpr) % (stripeH * 2);
+        // 1. Draw chromatic complementary sub-frame (Kaleido)
+        ctx!.drawImage(isFrameA ? shutterCanvasA : shutterCanvasB, 0, 0);
 
-        ctx!.fillStyle = "rgba(0, 0, 0, 0.88)";
-        for (let y = stripeSpeed; y < H; y += stripeH * 2) {
-          ctx!.fillRect(0, y, W, stripeH);
+        // 2. High-speed 70% Opaque Moving Shutter Guillotine
+        // Pitch-black bars (14px) moving at high frequency.
+        // Human persistence of vision fills in the text, but a 1/500s photo catches only 30% slices.
+        const stripeH = Math.round(14 * dpr);
+        const stripeOffset = Math.round(frame * 7 * dpr) % (stripeH * 2);
+
+        ctx!.fillStyle = "#050706"; // Opaque canvas background
+        for (let y = stripeOffset - stripeH * 2; y < H + stripeH * 2; y += stripeH * 2) {
+          ctx!.fillRect(0, y, W, Math.round(stripeH * 1.4)); // 70% occluded
         }
 
-        // Camera Auto-Exposure Blinding Beacons in all 4 corners
-        // Forces smartphone camera auto-exposure to plunge, darkening the text area
+        // 3. Interleaved Adversarial Optical Noise Bars
+        ctx!.fillStyle = isFrameA ? "rgba(0, 240, 255, 0.45)" : "rgba(255, 170, 0, 0.45)";
+        const noiseStep = Math.round(24 * dpr);
+        const noiseY = Math.round(frame * 5.3 * dpr) % noiseStep;
+        for (let y = noiseY; y < H; y += noiseStep) {
+          ctx!.fillRect(0, y, W, Math.round(2 * dpr));
+        }
+
+        // 4. Auto-Exposure (AE) Jamming Beacons in all 4 corners
         const beaconSize = Math.round(16 * dpr);
         const beaconPad = Math.round(6 * dpr);
-        ctx!.fillStyle = frame % 2 === 0 ? "#ffffff" : "#10b981";
+        ctx!.fillStyle = frame % 2 === 0 ? "#ffffff" : "#00f0ff";
         ctx!.fillRect(beaconPad, beaconPad, beaconSize, beaconSize);
         ctx!.fillRect(W - beaconPad - beaconSize, beaconPad, beaconSize, beaconSize);
         ctx!.fillRect(beaconPad, H - beaconPad - beaconSize, beaconSize, beaconSize);

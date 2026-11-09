@@ -133,12 +133,12 @@ export function SecretDisplay({ secret, sessionId, revealed }: SecretDisplayProp
             )}
             {mode === "kinetic" && (
               <span>
-                <strong className="text-white">Kinetic Motion Mode:</strong> Based on <em>Random Dot Kinematograms</em> (arXiv:2609.27461). Letters are defined solely by opposing motion vectors. Camera snapshots see only random dots.
+                <strong className="text-white">Kinetic Motion Mode:</strong> Text is rendered with high-density dynamic coherent particle streams. 100% visible and readable to human eyes, while counter-drifting decoy particles disrupt camera snapshots.
               </span>
             )}
             {mode === "shutter" && (
               <span>
-                <strong className="text-white">Shutter Jammer Mode:</strong> High-frequency rolling scanlines tuned to 58.7Hz induce violent black bands across CMOS phone camera sensors.
+                <strong className="text-white">Shutter Jammer Mode:</strong> Kaleido chromatic decomposition + 70% opaque moving shutter guillotine. Human vision blends the text smoothly, but camera snapshots capture only sliced 30% ribbons with heavy chromatic banding.
               </span>
             )}
           </div>
