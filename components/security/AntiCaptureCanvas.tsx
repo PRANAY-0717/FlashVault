@@ -124,3 +124,4 @@ export function AntiCaptureCanvas({ sessionId, active }: AntiCaptureCanvasProps)
     />
   );
 }
+

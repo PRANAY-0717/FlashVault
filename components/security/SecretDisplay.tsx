@@ -119,3 +119,4 @@ export function SecretDisplay({ secret, sessionId, revealed }: SecretDisplayProp
     </div>
   );
 }
+
