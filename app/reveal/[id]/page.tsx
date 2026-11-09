@@ -16,6 +16,7 @@ import {
 import { BlurFade } from "@/components/magic/BlurFade";
 import { BorderBeam } from "@/components/magic/BorderBeam";
 import { toast } from "@/components/ui/toaster";
+import { SecretDisplay } from "@/components/security/SecretDisplay";
 
 export default function RevealSecretPage() {
   const params = useParams();
@@ -28,6 +29,11 @@ export default function RevealSecretPage() {
   const [revealed, setRevealed] = useState(true);
   const [loading, setLoading] = useState(true);
   const [destroyed, setDestroyed] = useState(false);
+
+  // Unique session ID for forensic watermarking + typographic fingerprinting
+  const [sessionId] = useState<string>(() =>
+    typeof crypto !== "undefined" ? crypto.randomUUID() : `${Date.now()}-fallback`
+  );
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -248,9 +254,9 @@ export default function RevealSecretPage() {
                 </button>
               </div>
 
-              {/* Secret Text Area (Protected from copy & selection) */}
+              {/* Secret Text Area — Anti-capture protected */}
               <div
-                className="relative min-h-[120px] sm:min-h-[140px] flex items-center justify-center p-4 sm:p-6 bg-black/60 rounded-xl border border-white/5 no-copy-shield select-none"
+                className="relative rounded-xl border border-white/5 overflow-hidden no-copy-shield"
                 onCopy={(e) => {
                   e.preventDefault();
                   toast("Copying is disabled for confidential viewing", "error");
@@ -262,28 +268,35 @@ export default function RevealSecretPage() {
                       key="destroyed"
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="text-danger font-mono font-bold text-base sm:text-lg text-center"
+                      className="text-danger font-mono font-bold text-base sm:text-lg text-center min-h-[120px] sm:min-h-[140px] flex items-center justify-center bg-black/60 rounded-xl"
                     >
                       [TEXT DESTROYED]
                     </motion.div>
-                  ) : revealed ? (
+                  ) : (
                     <motion.div
-                      key="text"
+                      key="secret-display"
                       initial={{ opacity: 0, filter: "blur(6px)" }}
                       animate={{ opacity: 1, filter: "blur(0px)" }}
                       exit={{ opacity: 0 }}
-                      className="font-mono text-sm sm:text-base md:text-lg text-emerald-glow whitespace-pre-wrap break-all leading-relaxed w-full select-none text-center sm:text-left"
                     >
-                      {secret}
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="hidden"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-muted font-mono tracking-widest text-base sm:text-lg text-center"
-                    >
-                      ••••••••••••••••••••••••••••••••
+                      {/* Full-screen environment dimming when revealed */}
+                      {revealed && (
+                        <div
+                          aria-hidden="true"
+                          className="fixed inset-0 pointer-events-none"
+                          style={{
+                            background: "rgba(0,0,0,0.65)",
+                            backdropFilter: "brightness(0.5)",
+                            WebkitBackdropFilter: "brightness(0.5)",
+                            zIndex: 10,
+                          }}
+                        />
+                      )}
+                      <SecretDisplay
+                        secret={secret ?? ""}
+                        sessionId={sessionId}
+                        revealed={revealed}
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -319,6 +332,8 @@ export default function RevealSecretPage() {
               <p>• Reloading will permanently delete this view.</p>
               <p>• Switching browser tabs will instantly destroy the secret.</p>
               <p>• No copy remains anywhere in FlashVault logs or memory.</p>
+              <p>• Anti-capture canvas active — screenshots &amp; photos are protected.</p>
+              <p>• Forensic watermark embedded — session fingerprinted for audit.</p>
             </div>
           </div>
         </BlurFade>
