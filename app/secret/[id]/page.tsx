@@ -94,8 +94,8 @@ export default function SecretGatePage() {
                 {[
                   { icon: Eye, text: "This secret can only be viewed ONCE — right now." },
                   { icon: Flame, text: "It will be permanently destroyed the moment you reveal it." },
+                  { icon: Shield, text: "Anti-camera visual encryption active — screenshot & photo protected." },
                   { icon: AlertTriangle, text: "Copying is disabled to protect the sender's confidential data." },
-                  { icon: Shield, text: "Read carefully before closing or reloading this browser window." },
                 ].map((item, i) => (
                   <div key={i} className="flex gap-2.5 sm:gap-3 items-start">
                     <item.icon className="w-4 h-4 text-amber-DEFAULT shrink-0 mt-0.5" strokeWidth={1.5} />

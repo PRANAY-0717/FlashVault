@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
-import { AntiCaptureCanvas } from "./AntiCaptureCanvas";
+import { useEffect, useState } from "react";
+import { ShieldCheck, Activity, Crosshair, Waves, Tv, Info } from "lucide-react";
+import { AntiCaptureCanvas, DefenseMode } from "./AntiCaptureCanvas";
 
 interface SecretDisplayProps {
   secret: string;
@@ -9,97 +10,140 @@ interface SecretDisplayProps {
   revealed: boolean;
 }
 
-/**
- * SecretDisplay
- *
- * Renders the secret text with two simultaneous anti-capture layers:
- *
- * 1. AntiCaptureCanvas — 60-fps rolling-shutter canvas behind the text.
- *    This is the primary anti-camera mechanism. The 60Hz phase-inverting
- *    stripe grid causes severe banding in any camera capture.
- *
- * 2. Typographic fingerprinting — each character gets:
- *    - A micro letter-spacing variation (±0.02 em) derived from sessionId
- *    - A 1-LSB color shift between two near-identical emerald tones
- *      (#6ee7b6 vs #6ee7b7) that encode sessionId bit pattern
- *    These are imperceptible to the human eye but recoverable forensically.
- *
- * NOTE: Text must remain human-readable. The anti-capture effect comes
- * entirely from the canvas grid, NOT from low-contrast text color.
- */
 export function SecretDisplay({ secret, sessionId, revealed }: SecretDisplayProps) {
-  const fingerprinted = useMemo(() => {
-    if (!secret) return [];
+  const [focusLost, setFocusLost] = useState(false);
+  const [sessionTimestamp] = useState<number>(() => Date.now());
+  const [mode, setMode] = useState<DefenseMode>("lens");
 
-    // Derive a numeric seed from sessionId UUID hex digits
-    const seed = sessionId.replace(/-/g, "");
+  useEffect(() => {
+    const onBlur = () => setFocusLost(true);
+    const onFocus = () => setFocusLost(false);
 
-    return Array.from(secret).map((char, i) => {
-      const nibble1 = parseInt(seed[(i * 2) % seed.length], 16);
-      const nibble2 = parseInt(seed[(i * 2 + 1) % seed.length], 16);
+    // Veil on OS screenshot shortcuts
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        e.key === "PrintScreen" ||
+        ((e.metaKey || e.ctrlKey) &&
+          e.shiftKey &&
+          ["3", "4", "5", "s", "S"].includes(e.key))
+      ) {
+        setFocusLost(true);
+        setTimeout(() => {
+          if (document.hasFocus()) setFocusLost(false);
+        }, 2000);
+      }
+    };
 
-      // letterSpacing: map [0,15] → [-0.02em, +0.02em]
-      const spacingOffset = ((nibble1 / 15) * 0.04 - 0.02).toFixed(4);
-
-      // 1-LSB color shift on the green channel of emerald:
-      // #6ee7b6 (rgb 110,231,182) vs #6ee7b7 (rgb 110,231,183)
-      // Encodes one bit of sessionId per character — forensically detectable,
-      // visually indistinguishable (1 step out of 255 on one channel).
-      const color = nibble2 & 1 ? "#6ee7b7" : "#6ee7b6";
-
-      return { char, letterSpacing: `${spacingOffset}em`, color };
-    });
-  }, [secret, sessionId]);
+    window.addEventListener("blur", onBlur);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("blur", onBlur);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, []);
 
   return (
-    <div
-      className="relative rounded-xl overflow-hidden select-none no-copy-shield"
-      style={{
-        isolation: "isolate",
-        background: "#0a0a0a",
-        minHeight: "120px",
-      }}
-    >
-      {/* Layer 1: Anti-capture canvas sits at z-index 0 behind text */}
-      <AntiCaptureCanvas sessionId={sessionId} active={revealed} />
+    <div className="space-y-3 w-full select-none no-copy-shield">
+      {/* Top Security Status Bar */}
+      {revealed && (
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400">
+            <Activity className="w-3 h-3 animate-pulse text-emerald-400" />
+            <span className="font-semibold">Anti-Camera Defense Active</span>
+          </div>
 
-      {/* Layer 2: Text at z-index 1 — always readable, forensically fingerprinted */}
+          <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted/70">
+            <ShieldCheck className="w-3 h-3 text-emerald-400" />
+            <span>SID {sessionId.slice(0, 8)}…</span>
+          </div>
+        </div>
+      )}
+
+      {/* Mode Selector Tabs */}
+      {revealed && (
+        <div className="flex items-center justify-center p-1 rounded-xl bg-white/5 border border-white/8 gap-1">
+          <button
+            type="button"
+            onClick={() => setMode("lens")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+              mode === "lens"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm"
+                : "text-muted hover:text-white"
+            }`}
+          >
+            <Crosshair className="w-3.5 h-3.5 shrink-0" />
+            <span>Aperture Lens</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMode("kinetic")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+              mode === "kinetic"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm"
+                : "text-muted hover:text-white"
+            }`}
+          >
+            <Waves className="w-3.5 h-3.5 shrink-0" />
+            <span>Kinetic Motion</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setMode("shutter")}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-medium transition-all ${
+              mode === "shutter"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm"
+                : "text-muted hover:text-white"
+            }`}
+          >
+            <Tv className="w-3.5 h-3.5 shrink-0" />
+            <span>Shutter Jammer</span>
+          </button>
+        </div>
+      )}
+
+      {/* Protected Canvas Container */}
       <div
-        className="relative flex items-center justify-center p-4 sm:p-6 w-full"
-        style={{ zIndex: 1, minHeight: "120px" }}
+        className="relative rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl no-copy-shield"
+        style={{ isolation: "isolate", background: "#050706" }}
+        onContextMenu={(e) => e.preventDefault()}
       >
-        {revealed ? (
-          <p
-            className="font-mono text-sm sm:text-base md:text-lg whitespace-pre-wrap break-all leading-relaxed w-full text-center sm:text-left"
-            style={{ userSelect: "none", WebkitUserSelect: "none" }}
-            aria-label="Secret content"
-          >
-            {fingerprinted.map(({ char, letterSpacing, color }, i) => (
-              <span
-                key={i}
-                style={{
-                  letterSpacing,
-                  color,
-                  // Micro-opacity variation (0.97–1.0) encodes a third fingerprinting dimension
-                  opacity:
-                    0.97 +
-                    ((parseInt(sessionId[i % sessionId.length] || "0", 16) % 4) / 4) * 0.03,
-                }}
-              >
-                {char}
-              </span>
-            ))}
-          </p>
-        ) : (
-          <p
-            className="font-mono tracking-widest text-base sm:text-lg text-center text-muted"
-          >
-            ••••••••••••••••••••••••••••••••
-          </p>
-        )}
+        <AntiCaptureCanvas
+          secret={secret}
+          sessionId={sessionId}
+          sessionTimestamp={sessionTimestamp}
+          active={revealed}
+          focusLost={focusLost}
+          mode={mode}
+        />
       </div>
+
+      {/* Explanatory Mode Hint */}
+      {revealed && (
+        <div className="flex items-start gap-2 p-2.5 rounded-xl bg-white/3 border border-white/5 text-[11px] text-muted leading-relaxed">
+          <Info className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+          <div>
+            {mode === "lens" && (
+              <span>
+                <strong className="text-white">Aperture Lens Mode:</strong> Touch and glide your finger or mouse across the box to decrypt words under your cursor. External cameras cannot photograph the full secret at once.
+              </span>
+            )}
+            {mode === "kinetic" && (
+              <span>
+                <strong className="text-white">Kinetic Motion Mode:</strong> Based on <em>Random Dot Kinematograms</em> (arXiv:2609.27461). Letters are defined solely by opposing motion vectors. Camera snapshots see only random dots.
+              </span>
+            )}
+            {mode === "shutter" && (
+              <span>
+                <strong className="text-white">Shutter Jammer Mode:</strong> High-frequency rolling scanlines tuned to 58.7Hz induce violent black bands across CMOS phone camera sensors.
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-
