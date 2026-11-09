@@ -279,19 +279,6 @@ export default function RevealSecretPage() {
                       animate={{ opacity: 1, filter: "blur(0px)" }}
                       exit={{ opacity: 0 }}
                     >
-                      {/* Full-screen environment dimming when revealed */}
-                      {revealed && (
-                        <div
-                          aria-hidden="true"
-                          className="fixed inset-0 pointer-events-none"
-                          style={{
-                            background: "rgba(0,0,0,0.65)",
-                            backdropFilter: "brightness(0.5)",
-                            WebkitBackdropFilter: "brightness(0.5)",
-                            zIndex: 10,
-                          }}
-                        />
-                      )}
                       <SecretDisplay
                         secret={secret ?? ""}
                         sessionId={sessionId}
